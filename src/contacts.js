@@ -1,6 +1,7 @@
-import { columnMap, contactKeyFields } from "./config.js";
+import { columnMap, contactKeyFields, contactsColumns, outputFiles, sourcesSeparator } from "./config.js";
 import { analyzeFiles } from "./files.js";
 import { normalizeRecord } from "./normalize.js";
+import { writeCsv } from "./table.js";
 
 const fields = Object.keys(columnMap);
 
@@ -38,18 +39,56 @@ export const readExports = (files) =>
       unmatched: file.table.columns.filter((column) => matchColumn(column) === null),
     }));
 
+// Ключ склейки: нормализованный телефон, а без него почта.
+export const contactKey = (record) => record.телефон || record.почта;
+
+// Записи с одним ключом склеиваются в одну: пустые поля дополняются значениями
+// из других записей, источники собираются без повторов.
+export const mergeContacts = (records) => {
+  const merged = records.reduce((contacts, record) => {
+    const key = contactKey(record);
+    const known = contacts.get(key);
+
+    if (known === undefined) {
+      return contacts.set(key, {
+        имя: record.имя,
+        телефон: record.телефон,
+        почта: record.почта,
+        источники: [record.источник],
+      });
+    }
+
+    return contacts.set(key, {
+      имя: known.имя || record.имя,
+      телефон: known.телефон || record.телефон,
+      почта: known.почта || record.почта,
+      источники: known.источники.includes(record.источник)
+        ? known.источники
+        : [...known.источники, record.источник],
+    });
+  }, new Map());
+
+  return [...merged.values()];
+};
+
 export const analyzeContacts = (files) => {
   const exports = readExports(files);
   const records = exports.flatMap((item) => item.records);
   const normalized = records.map(normalizeRecord);
+  const identifiable = normalized
+    .map((item) => item.record)
+    .filter((record) => contactKey(record) !== "");
+  const contacts = mergeContacts(identifiable);
 
   return {
     exports,
-    records: normalized.map((item) => item.record),
+    contacts,
     summary: {
       exports: exports.length,
       records: records.length,
+      contacts: contacts.length,
       rejectedValues: normalized.reduce((sum, item) => sum + item.rejected, 0),
+      rejectedRecords: normalized.length - identifiable.length,
       unmatched: exports.flatMap(({ name, unmatched }) =>
         unmatched.map((column) => ({ column, source: name })),
       ),
@@ -65,8 +104,23 @@ export const formatContactsSummary = ({ exports, summary }) => [
       ? "нет"
       : summary.unmatched.map(({ column, source }) => `${column} (${source})`).join(", ")
   }`,
-  `Отбраковано значений: ${summary.rejectedValues}`,
+  `Уникальных контактов: ${summary.contacts}`,
+  `Отбраковано значений: ${summary.rejectedValues}, записей без телефона и почты: ${summary.rejectedRecords}`,
 ];
 
-export const runContacts = ({ directory }) =>
-  formatContactsSummary(analyzeContacts(analyzeFiles(directory).files));
+const toContactsRow = (contact) => [
+  contact.имя,
+  contact.телефон,
+  contact.почта,
+  contact.источники.join(sourcesSeparator),
+];
+
+export const writeContacts = (out, contacts) =>
+  writeCsv(out, outputFiles.contacts, contactsColumns, contacts.map(toContactsRow));
+
+export const runContacts = ({ directory, out }) => {
+  const result = analyzeContacts(analyzeFiles(directory).files);
+  const contactsPath = writeContacts(out, result.contacts);
+
+  return [...formatContactsSummary(result), `Таблица: ${contactsPath}`];
+};
