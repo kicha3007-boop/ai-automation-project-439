@@ -67,10 +67,3 @@ export const formatFilesSummary = (summary) => [
   `Документов: ${summary.statuses[statuses.document]}, требуют ручного разбора: ${summary.statuses[statuses.manual]}, посторонних: ${summary.statuses[statuses.foreign]}`,
   `Дубликатов найдено: ${summary.duplicates} в ${summary.duplicateGroups} ${groupsWord(summary.duplicateGroups)}`,
 ];
-
-export const runFiles = ({ directory, out }) => {
-  const { files, summary } = analyzeFiles(directory);
-  const registryPath = writeRegistry(out, files);
-
-  return [...formatFilesSummary(summary), `Реестр: ${registryPath}`];
-};

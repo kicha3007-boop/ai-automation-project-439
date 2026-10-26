@@ -1,5 +1,4 @@
 import { columnMap, contactKeyFields, contactsColumns, outputFiles, sourcesSeparator } from "./config.js";
-import { analyzeFiles } from "./files.js";
 import { normalizeRecord } from "./normalize.js";
 import { writeCsv } from "./table.js";
 
@@ -117,10 +116,3 @@ const toContactsRow = (contact) => [
 
 export const writeContacts = (out, contacts) =>
   writeCsv(out, outputFiles.contacts, contactsColumns, contacts.map(toContactsRow));
-
-export const runContacts = ({ directory, out }) => {
-  const result = analyzeContacts(analyzeFiles(directory).files);
-  const contactsPath = writeContacts(out, result.contacts);
-
-  return [...formatContactsSummary(result), `Таблица: ${contactsPath}`];
-};

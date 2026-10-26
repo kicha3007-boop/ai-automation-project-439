@@ -1,5 +1,4 @@
-import { runContacts } from "./src/contacts.js";
-import { runFiles } from "./src/files.js";
+import { runContacts, runFiles } from "./src/commands.js";
 
 const commands = {
   files: runFiles,
