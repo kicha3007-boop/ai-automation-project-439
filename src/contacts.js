@@ -1,5 +1,6 @@
 import { columnMap, contactKeyFields } from "./config.js";
 import { analyzeFiles } from "./files.js";
+import { normalizeRecord } from "./normalize.js";
 
 const fields = Object.keys(columnMap);
 
@@ -40,12 +41,15 @@ export const readExports = (files) =>
 export const analyzeContacts = (files) => {
   const exports = readExports(files);
   const records = exports.flatMap((item) => item.records);
+  const normalized = records.map(normalizeRecord);
 
   return {
     exports,
+    records: normalized.map((item) => item.record),
     summary: {
       exports: exports.length,
       records: records.length,
+      rejectedValues: normalized.reduce((sum, item) => sum + item.rejected, 0),
       unmatched: exports.flatMap(({ name, unmatched }) =>
         unmatched.map((column) => ({ column, source: name })),
       ),
@@ -61,6 +65,7 @@ export const formatContactsSummary = ({ exports, summary }) => [
       ? "нет"
       : summary.unmatched.map(({ column, source }) => `${column} (${source})`).join(", ")
   }`,
+  `Отбраковано значений: ${summary.rejectedValues}`,
 ];
 
 export const runContacts = ({ directory }) =>
