@@ -1,0 +1,29 @@
+{
+  "name": "@hexlet/code",
+  "version": "1.0.0",
+  "description": "Консольная программа: реестр документов компании и чистая таблица контактов",
+  "type": "module",
+  "private": true,
+  "main": "index.js",
+  "bin": {
+    "file-automation": "bin/file-automation.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node --test"
+  },
+  "author": "Kichigin Sergey",
+  "license": "MIT",
+  "dependencies": {
+    "as-table": "^1.0.55",
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0"
+  }
+}

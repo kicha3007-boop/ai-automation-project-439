@@ -17,16 +17,22 @@
 
 ## Установка
 
-<!-- Опишите установку: клонирование, зависимости, переменные окружения -->
+Нужны Node.js 22 или новее (Хекслет проверяет на Node.js 26), npm и make.
 
 ```bash
 git clone https://github.com/kicha3007-boop/ai-automation-project-439.git
 cd ai-automation-project-439
+make setup     # npm ci
+npm link       # команда file-automation появится в системе
 ```
 
 ## Использование
 
-<!-- Добавьте примеры запуска и запись asciinema — именно это смотрит работодатель -->
+```bash
+file-automation                                   # справка
+file-automation files ./company-files --out ./out
+file-automation contacts ./company-files --out ./out
+```
 
 ---
 
